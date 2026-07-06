@@ -9,7 +9,10 @@ type MenuItem = {
   name: string
   description: string
   price: number
+  category: string
 }
+
+const CATEGORY_OPTIONS = ['Beverage', 'Pastry', 'Dessert']
 
 export default function AdminDashboard() {
   const router = useRouter()
@@ -17,7 +20,7 @@ export default function AdminDashboard() {
 
   const [items, setItems] = useState<MenuItem[]>([])
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [form, setForm] = useState({ name: '', description: '', price: '' })
+  const [form, setForm] = useState({ name: '', description: '', price: '', category: CATEGORY_OPTIONS[0] })
   const [saving, setSaving] = useState(false)
 
   const fetchItems = async () => {
@@ -32,12 +35,17 @@ export default function AdminDashboard() {
 
   const resetForm = () => {
     setEditingId(null)
-    setForm({ name: '', description: '', price: '' })
+    setForm({ name: '', description: '', price: '', category: CATEGORY_OPTIONS[0] })
   }
 
   const startEdit = (item: MenuItem) => {
     setEditingId(item.id)
-    setForm({ name: item.name, description: item.description, price: String(item.price) })
+    setForm({
+      name: item.name,
+      description: item.description,
+      price: String(item.price),
+      category: item.category || CATEGORY_OPTIONS[0],
+    })
   }
 
   const handleSave = async (e: React.FormEvent) => {
@@ -48,6 +56,7 @@ export default function AdminDashboard() {
       name: form.name,
       description: form.description,
       price: Number(form.price),
+      category: form.category,
     }
 
     const { error } = editingId
@@ -123,6 +132,16 @@ export default function AdminDashboard() {
             onChange={(e) => setForm({ ...form, price: e.target.value })}
             className="w-full rounded-lg border border-gray-200 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#5A189A]/30"
           />
+          <select
+            required
+            value={form.category}
+            onChange={(e) => setForm({ ...form, category: e.target.value })}
+            className="w-full rounded-lg border border-gray-200 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#5A189A]/30 bg-white"
+          >
+            {CATEGORY_OPTIONS.map((cat) => (
+              <option key={cat} value={cat}>{cat}</option>
+            ))}
+          </select>
 
           <div className="flex gap-3">
             <button
@@ -152,7 +171,12 @@ export default function AdminDashboard() {
               className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex gap-4 items-center"
             >
               <div className="flex-1">
-                <h3 className="font-bold text-gray-900">{item.name}</h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-bold text-gray-900">{item.name}</h3>
+                  <span className="text-[10px] uppercase tracking-wide font-semibold text-[#5A189A] bg-[#5A189A]/10 px-2 py-0.5 rounded-full">
+                    {item.category}
+                  </span>
+                </div>
                 <p className="text-gray-500 text-sm">{item.description}</p>
                 <p className="text-[#5A189A] font-bold mt-1">AED {item.price}</p>
               </div>
