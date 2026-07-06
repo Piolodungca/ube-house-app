@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createBrowserSupabaseClient } from '../../utils/supabase/browser'
+import { createBrowserSupabaseClient } from '../../utils/browser'
 
 type MenuItem = {
   id: string
