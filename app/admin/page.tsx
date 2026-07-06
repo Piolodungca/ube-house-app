@@ -10,6 +10,7 @@ type MenuItem = {
   description: string
   price: number
   category: string
+  image_url: string
 }
 
 const CATEGORY_OPTIONS = ['Beverage', 'Pastry', 'Dessert']
@@ -20,7 +21,7 @@ export default function AdminDashboard() {
 
   const [items, setItems] = useState<MenuItem[]>([])
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [form, setForm] = useState({ name: '', description: '', price: '', category: CATEGORY_OPTIONS[0] })
+  const [form, setForm] = useState({ name: '', description: '', price: '', category: CATEGORY_OPTIONS[0], image_url: '' })
   const [saving, setSaving] = useState(false)
 
   const fetchItems = async () => {
@@ -35,7 +36,7 @@ export default function AdminDashboard() {
 
   const resetForm = () => {
     setEditingId(null)
-    setForm({ name: '', description: '', price: '', category: CATEGORY_OPTIONS[0] })
+    setForm({ name: '', description: '', price: '', category: CATEGORY_OPTIONS[0], image_url: '' })
   }
 
   const startEdit = (item: MenuItem) => {
@@ -45,6 +46,7 @@ export default function AdminDashboard() {
       description: item.description,
       price: String(item.price),
       category: item.category || CATEGORY_OPTIONS[0],
+      image_url: item.image_url || '',
     })
   }
 
@@ -57,6 +59,7 @@ export default function AdminDashboard() {
       description: form.description,
       price: Number(form.price),
       category: form.category,
+      image_url: form.image_url || null,
     }
 
     const { error } = editingId
@@ -142,6 +145,21 @@ export default function AdminDashboard() {
               <option key={cat} value={cat}>{cat}</option>
             ))}
           </select>
+          <input
+            type="url"
+            placeholder="Image URL (optional)"
+            value={form.image_url}
+            onChange={(e) => setForm({ ...form, image_url: e.target.value })}
+            className="w-full rounded-lg border border-gray-200 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#5A189A]/30"
+          />
+          {form.image_url && (
+            <img
+              src={form.image_url}
+              alt="Preview"
+              className="w-24 h-24 rounded-xl object-cover border border-gray-200"
+              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+            />
+          )}
 
           <div className="flex gap-3">
             <button
@@ -170,6 +188,18 @@ export default function AdminDashboard() {
               key={item.id}
               className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex gap-4 items-center"
             >
+              {item.image_url ? (
+                <img
+                  src={item.image_url}
+                  alt={item.name}
+                  className="w-14 h-14 rounded-lg object-cover flex-shrink-0 bg-gray-100"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                />
+              ) : (
+                <div className="w-14 h-14 rounded-lg bg-[#F7F2FA] flex items-center justify-center flex-shrink-0 text-xl">
+                  🍮
+                </div>
+              )}
               <div className="flex-1">
                 <div className="flex items-center gap-2">
                   <h3 className="font-bold text-gray-900">{item.name}</h3>
