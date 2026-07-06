@@ -8,6 +8,7 @@ type Order = {
   table_number: string
   total_amount: number
   status: 'pending' | 'in-progress' | 'completed' | 'voided'
+  payment_status: 'pending' | 'paid' | 'failed'
   created_at: string
   order_items: any[]
 }
@@ -36,6 +37,7 @@ export default function KitchenDisplay() {
     table_number,
     total_amount,
     status,
+    payment_status,
     created_at,
     order_items (
       quantity,
@@ -49,11 +51,15 @@ export default function KitchenDisplay() {
     const startOfToday = new Date()
     startOfToday.setHours(0, 0, 0, 0)
 
-    // Active orders (pending + in-progress) — no time limit, these must never disappear
+    // Active orders (pending + in-progress) — no time limit, these must never disappear.
+    // payment_status filter: only show orders that are paid, or still pending payment
+    // (i.e. Cash on Delivery / not yet charged). Excludes 'failed' payments so the
+    // kitchen never preps something nobody actually paid for.
     const activeQuery = supabase
       .from('orders')
       .select(ORDER_SELECT)
       .in('status', ['pending', 'in-progress'])
+      .in('payment_status', ['pending', 'paid'])
       .order('created_at', { ascending: true })
 
     // Completed orders — only today's, to keep the KDS screen relevant.
@@ -62,6 +68,7 @@ export default function KitchenDisplay() {
       .from('orders')
       .select(ORDER_SELECT)
       .eq('status', 'completed')
+      .in('payment_status', ['pending', 'paid'])
       .gte('created_at', startOfToday.toISOString())
       .order('created_at', { ascending: false })
 
