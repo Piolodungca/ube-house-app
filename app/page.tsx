@@ -130,4 +130,10 @@ function OrderingPage() {
 }
 
 // useSearchParams requires a Suspense boundary around the component that calls it
-
+export default function Home() {
+     return (
+       <Suspense fallback={null}>
+         <OrderingPage />
+       </Suspense>
+     )
+   }
