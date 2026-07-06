@@ -92,6 +92,18 @@ function OrderingPage() {
               key={item.id}
               className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex gap-4 items-center"
             >
+              {item.image_url ? (
+                <img
+                  src={item.image_url}
+                  alt={item.name}
+                  className="w-20 h-20 rounded-xl object-cover flex-shrink-0 bg-gray-100"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                />
+              ) : (
+                <div className="w-20 h-20 rounded-xl bg-[#F7F2FA] flex items-center justify-center flex-shrink-0 text-2xl">
+                  🍮
+                </div>
+              )}
               <div className="flex-1">
                 <h2 className="text-lg font-bold text-gray-900">{item.name}</h2>
                 <p className="text-gray-500 text-sm mt-1">{item.description}</p>
@@ -131,9 +143,9 @@ function OrderingPage() {
 
 // useSearchParams requires a Suspense boundary around the component that calls it
 export default function Home() {
-     return (
-       <Suspense fallback={null}>
-         <OrderingPage />
-       </Suspense>
-     )
-   }
+  return (
+    <Suspense fallback={null}>
+      <OrderingPage />
+    </Suspense>
+  )
+}
