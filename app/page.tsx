@@ -65,6 +65,27 @@ function OrderingPage() {
 
       if (itemsError) throw itemsError
 
+      // Hook point for Stripe: call the checkout API route so the payment
+      // flow is wired end-to-end. Right now this is a placeholder — it does
+      // not block the order, since there's no real Stripe integration yet
+      // and the current flow is effectively Cash on Delivery.
+      try {
+        const checkoutResponse = await fetch('/api/checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            orderId: newOrderId,
+            tableNumber,
+            amount: cartTotal,
+          }),
+        })
+        const checkoutResult = await checkoutResponse.json()
+        console.log('Checkout hook response:', checkoutResult)
+      } catch (checkoutError) {
+        // Don't block the order over the payment placeholder — just log it.
+        console.warn('Checkout hook failed (non-blocking):', checkoutError)
+      }
+
       alert('Order successfully sent to the kitchen! 🚀')
       setCart([])
     } catch (error) {
