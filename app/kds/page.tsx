@@ -7,14 +7,29 @@ type Order = {
   id: string
   table_number: string
   total_amount: number
-  status: 'pending' | 'in-progress' | 'completed'
+  status: 'pending' | 'in-progress' | 'completed' | 'voided'
   created_at: string
   order_items: any[]
 }
 
+const VOID_REASONS = [
+  'Customer changed mind',
+  'Kitchen out of stock',
+  'Duplicate order',
+  'Payment issue',
+  'Other',
+]
+
 export default function KitchenDisplay() {
   const [orders, setOrders] = useState<Order[]>([])
   const [activeTab, setActiveTab] = useState<'board' | 'completed'>('board')
+
+  // Void modal state
+  const [voidingOrder, setVoidingOrder] = useState<Order | null>(null)
+  const [voidPin, setVoidPin] = useState('')
+  const [voidReason, setVoidReason] = useState(VOID_REASONS[0])
+  const [voidError, setVoidError] = useState('')
+  const [voidSubmitting, setVoidSubmitting] = useState(false)
 
   const ORDER_SELECT = `
     id,
@@ -82,6 +97,49 @@ export default function KitchenDisplay() {
     // No manual state update needed — the real-time subscription refetches automatically.
   }
 
+  const openVoidModal = (order: Order) => {
+    setVoidingOrder(order)
+    setVoidPin('')
+    setVoidReason(VOID_REASONS[0])
+    setVoidError('')
+  }
+
+  const closeVoidModal = () => {
+    setVoidingOrder(null)
+    setVoidPin('')
+    setVoidReason(VOID_REASONS[0])
+    setVoidError('')
+  }
+
+  const confirmVoid = async () => {
+    if (!voidingOrder) return
+
+    const correctPin = process.env.NEXT_PUBLIC_KDS_VOID_PIN
+    if (!correctPin) {
+      setVoidError('Void PIN is not configured. Contact your manager.')
+      return
+    }
+    if (voidPin !== correctPin) {
+      setVoidError('Incorrect PIN.')
+      return
+    }
+
+    setVoidSubmitting(true)
+    const { error } = await supabase
+      .from('orders')
+      .update({ status: 'voided', void_reason: voidReason })
+      .eq('id', voidingOrder.id)
+    setVoidSubmitting(false)
+
+    if (error) {
+      setVoidError('Failed to void order: ' + error.message)
+      return
+    }
+
+    closeVoidModal()
+    // Real-time subscription will refetch and remove this order from the board automatically.
+  }
+
   const pendingOrders = orders.filter(o => o.status === 'pending')
   const inProgressOrders = orders.filter(o => o.status === 'in-progress')
   const completedTodayOrders = orders
@@ -110,12 +168,20 @@ export default function KitchenDisplay() {
       </ul>
 
       {order.status === 'pending' && (
-        <button
-          onClick={() => updateStatus(order.id, 'in-progress')}
-          className="w-full bg-[#FFEA85] text-[#5A189A] py-4 rounded-xl font-bold text-lg hover:brightness-95 transition-colors active:scale-95"
-        >
-          Start Preparing →
-        </button>
+        <div className="space-y-2">
+          <button
+            onClick={() => updateStatus(order.id, 'in-progress')}
+            className="w-full bg-[#FFEA85] text-[#5A189A] py-4 rounded-xl font-bold text-lg hover:brightness-95 transition-colors active:scale-95"
+          >
+            Start Preparing →
+          </button>
+          <button
+            onClick={() => openVoidModal(order)}
+            className="w-full bg-white text-red-500 border border-red-200 py-2.5 rounded-xl font-semibold text-sm hover:bg-red-50 transition-colors active:scale-95"
+          >
+            Void Order
+          </button>
+        </div>
       )}
 
       {order.status === 'in-progress' && (
@@ -217,6 +283,58 @@ export default function KitchenDisplay() {
           ) : (
             completedTodayOrders.map(renderTicket)
           )}
+        </div>
+      )}
+
+      {/* Void confirmation modal */}
+      {voidingOrder && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-6">
+          <div className="bg-white text-black rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+            <h3 className="text-xl font-bold text-red-500 mb-1">Void {voidingOrder.table_number}?</h3>
+            <p className="text-gray-500 text-sm mb-5">
+              This cancels the order permanently. It stays on record for reporting — it will not be deleted.
+            </p>
+
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Reason</label>
+            <select
+              value={voidReason}
+              onChange={(e) => setVoidReason(e.target.value)}
+              className="w-full rounded-lg border border-gray-200 px-4 py-2.5 mb-4 focus:outline-none focus:ring-2 focus:ring-red-200 bg-white"
+            >
+              {VOID_REASONS.map((reason) => (
+                <option key={reason} value={reason}>{reason}</option>
+              ))}
+            </select>
+
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Manager PIN</label>
+            <input
+              type="password"
+              inputMode="numeric"
+              value={voidPin}
+              onChange={(e) => setVoidPin(e.target.value)}
+              className="w-full rounded-lg border border-gray-200 px-4 py-2.5 mb-2 focus:outline-none focus:ring-2 focus:ring-red-200"
+              placeholder="Enter PIN to confirm"
+              autoFocus
+            />
+
+            {voidError && <p className="text-red-500 text-sm mb-3">{voidError}</p>}
+
+            <div className="flex gap-3 mt-4">
+              <button
+                onClick={closeVoidModal}
+                className="flex-1 bg-gray-100 text-gray-600 font-semibold py-2.5 rounded-full hover:bg-gray-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmVoid}
+                disabled={voidSubmitting || !voidPin}
+                className="flex-1 bg-red-500 text-white font-bold py-2.5 rounded-full hover:bg-red-600 disabled:opacity-50 transition-colors"
+              >
+                {voidSubmitting ? 'Voiding...' : 'Confirm Void'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
