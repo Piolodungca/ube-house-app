@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createBrowserSupabaseClient } from '../../../utils/supabase/browser'
+import { createBrowserSupabaseClient } from '../../../utils/browser'
 
 export default function AdminLogin() {
   const router = useRouter()
