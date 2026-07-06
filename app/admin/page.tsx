@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { createBrowserSupabaseClient } from '../../utils/browser'
 
 type MenuItem = {
@@ -95,12 +96,20 @@ export default function AdminDashboard() {
       <div className="max-w-3xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-[#5A189A]">Menu Management</h1>
-          <button
-            onClick={handleSignOut}
-            className="text-sm font-semibold text-gray-500 hover:text-[#5A189A] transition-colors"
-          >
-            Sign Out
-          </button>
+          <div className="flex items-center gap-5">
+            <Link
+              href="/admin/reports"
+              className="text-sm font-semibold text-gray-500 hover:text-[#5A189A] transition-colors"
+            >
+              Sales Report
+            </Link>
+            <button
+              onClick={handleSignOut}
+              className="text-sm font-semibold text-gray-500 hover:text-[#5A189A] transition-colors"
+            >
+              Sign Out
+            </button>
+          </div>
         </div>
 
         {/* Add / Edit form */}
